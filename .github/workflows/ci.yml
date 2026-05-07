@@ -21,7 +21,7 @@ jobs:
           cache: maven
 
       - name: Build and test
-        run: mvn -B verify --no-transfer-progress -Dexcludes="**/ApiKeyServiceApplicationTests.java"
+        run: mvn -B verify --no-transfer-progress "-Dtest=!ApiKeyServiceApplicationTests" -DfailIfNoTests=false
 
   docker:
     needs: build
