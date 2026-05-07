@@ -1,5 +1,7 @@
 # API Key Service
 
+![CI](https://github.com/Joaquin-asr/apikey-service/actions/workflows/ci.yml/badge.svg)
+
 REST microservice for managing the full lifecycle of API Keys: generation, validation, and renewal with AES-GCM encryption, SHA-256 hashing, and strict transactional control.
 
 ---
