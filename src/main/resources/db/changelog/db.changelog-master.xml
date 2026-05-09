@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="Joaquin">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="api_keys"/></not>
+        </preConditions>
+        <createTable tableName="api_keys">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="client_id" type="NVARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="api_key" type="NVARCHAR(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="api_key_hash" type="NVARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME2(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiration_at" type="DATETIME2(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="NVARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="renew_cooldown_until" type="DATETIME2(6)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="Joaquin">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists indexName="UIX_api_keys_one_active_per_client"/></not>
+        </preConditions>
+        <sql>
+            CREATE UNIQUE INDEX UIX_api_keys_one_active_per_client
+            ON api_keys (client_id)
+            WHERE active = '1';
+        </sql>
+        <rollback>
+            DROP INDEX UIX_api_keys_one_active_per_client ON api_keys;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
