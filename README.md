@@ -6,6 +6,15 @@ REST microservice for managing the full lifecycle of API Keys: generation, valid
 
 ---
 
+## Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [User Stories (Confluence)](https://joaquinasr16.atlassian.net/wiki/spaces/PORT/pages/458753/Historias+de+Usuario+-+API+Key+Service) | HU-01 through HU-06 — actors, acceptance criteria and response codes for each operation |
+| [Flow diagrams (diagrams.net)](https://app.diagrams.net/#Uhttps://raw.githubusercontent.com/Joaquin-asr/apikey-service/main/docs/diagrams/api-flows.drawio) | Detailed flowcharts for all three endpoints, every decision branch and error path included |
+
+---
+
 ## The problem it solves
 
 When multiple clients or services need to authenticate against an API, someone has to handle key issuance, rotation, and revocation securely. The common issues:
@@ -59,6 +68,8 @@ flowchart LR
 ---
 
 ## How each operation works
+
+For a complete step-by-step breakdown of each endpoint — all validation branches, locking behavior, and error paths — open the [draw.io flowcharts](https://app.diagrams.net/#Uhttps://raw.githubusercontent.com/Joaquin-asr/apikey-service/main/docs/diagrams/api-flows.drawio) (3 pages, one per endpoint). The sequence diagrams below show the happy path.
 
 ### Generate (`POST /api/apikeys/generate`)
 
@@ -153,7 +164,9 @@ The stored hash is compared against `SHA-256(incomingKey)`. The encrypted value 
 | ORM | Spring Data JPA / Hibernate |
 | Security | AES-GCM + SHA-256 |
 | Concurrency | Pessimistic locking + SERIALIZABLE isolation |
-| Logging | SLF4J + Logback (rolling files by date) |
+| Logging | SLF4J + Logback (rolling files, 30-day retention) |
+| Request tracing | MDC Correlation IDs (`X-Correlation-Id` header) |
+| Schema migrations | Liquibase |
 | Observability | Spring Boot Actuator |
 | API docs | SpringDoc / Swagger UI |
 | Load testing | k6 |
@@ -241,6 +254,13 @@ Interactive docs: `http://localhost:8080/swagger-ui.html`
 ---
 
 ## Observability
+
+Every HTTP request is automatically assigned a `X-Correlation-Id` UUID. If the client includes this header, the service reuses it; otherwise it generates one. The ID appears on every log line for that request — across business logic, aspects, and database calls — and is returned in the response header, enabling end-to-end tracing across services.
+
+```
+2026-05-08 21:32:10.445 INFO  c.e.a.aspect.LoggingAspect [a3f2b1c4-8e7d-4f6a-9b2c] - [createOrGetApiKey] Start
+2026-05-08 21:32:10.451 INFO  c.e.a.aspect.LoggingAspect [a3f2b1c4-8e7d-4f6a-9b2c] - [createOrGetApiKey] End (6ms)
+```
 
 | Endpoint | What it shows |
 |----------|--------------|

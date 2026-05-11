@@ -1,0 +1,420 @@
+<mxfile host="app.diagrams.net" modified="2026-05-10T20:00:00.000Z" agent="draw.io" version="21.7.5" type="device">
+
+  <!-- ================================================================ -->
+  <!-- PAGE 1: POST /api/apikeys/generate                               -->
+  <!-- ================================================================ -->
+  <diagram id="gen" name="POST /generate">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ── START ── -->
+        <mxCell id="2" value="POST /api/apikeys/generate" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CorrelationIdFilter ── -->
+        <mxCell id="3" value="&lt;b&gt;CorrelationIdFilter&lt;/b&gt;&lt;br&gt;Leer header X-Correlation-Id (generar UUID si ausente)&lt;br&gt;Inyectar en MDC de SLF4J · Agregar al response" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="390" y="100" width="300" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: header X-Client-Id presente? ── -->
+        <mxCell id="4" value="¿Header X-Client-Id&lt;br&gt;presente y no vacío?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Error: header ausente ── -->
+        <mxCell id="5" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;INVALID_CLIENT_ID&lt;br&gt;&lt;i&gt;Header ausente o vacío&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="215" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: SHA-256(clientId) válido? ── -->
+        <mxCell id="6" value="¿SHA-256(clientId)&lt;br&gt;== validClientIdHash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="310" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Error: cliente inválido ── -->
+        <mxCell id="7" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;INVALID_CLIENT_ID&lt;br&gt;&lt;i&gt;Cliente no autorizado&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="325" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Process: clientHash ── -->
+        <mxCell id="8" value="clientHash = SHA-256(clientId)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="420" width="260" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── DB: SELECT con PESSIMISTIC_WRITE ── -->
+        <mxCell id="9" value="&lt;b&gt;SELECT&lt;/b&gt; * FROM api_keys&lt;br&gt;WHERE client_id = clientHash AND active = '1'&lt;br&gt;[TX SERIALIZABLE · PESSIMISTIC_WRITE · timeout 5s]" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="500" width="310" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: existe clave activa? ── -->
+        <mxCell id="10" value="¿Existe clave activa&lt;br&gt;para este cliente?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="620" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- RAMA A — No existe clave activa (columna izquierda)       -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="60" value="RAMA A — Sin clave activa" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=10;fontColor=#1e4d78;" vertex="1" parent="1">
+          <mxGeometry x="20" y="595" width="200" height="25" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="11" value="generateRawKey()&lt;br&gt;UUID aleatorio" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="630" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="12" value="AES/GCM encrypt(rawKey, secretKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="710" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="13" value="apiKeyHash = SHA-256(rawKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="790" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="14" value="expirationAt = próximo MONDAY 00:00" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="870" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="15" value="&lt;b&gt;INSERT&lt;/b&gt; api_keys&lt;br&gt;(clientHash, encryptedKey,&lt;br&gt;apiKeyHash, expirationAt, active='1')" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="950" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="16" value="&lt;b&gt;HTTP 200 OK&lt;/b&gt;&lt;br&gt;APIKEY_CREATED&lt;br&gt;Nuevo ApiKey generado exitosamente" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1060" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: expirada? (solo si existe clave activa) ── -->
+        <mxCell id="17" value="¿expirationAt&lt;br&gt;&lt; ahora?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="730" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- RAMA B — Clave activa válida (columna derecha)           -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="61" value="RAMA B — Clave activa válida" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=10;fontColor=#1e4d78;" vertex="1" parent="1">
+          <mxGeometry x="780" y="705" width="210" height="25" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="18" value="AES/GCM decrypt(apiKey, secretKey)&lt;br&gt;→ rawKey (para retornar al cliente)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="780" y="740" width="250" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="19" value="&lt;b&gt;HTTP 200 OK&lt;/b&gt;&lt;br&gt;APIKEY_ALREADY_ACTIVE&lt;br&gt;Ya tienes un ApiKey activo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="780" y="825" width="250" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- RAMA B (bis) — Clave expirada: deactivate + crear nueva  -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="62" value="RAMA B — Clave expirada" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=10;fontColor=#1e4d78;" vertex="1" parent="1">
+          <mxGeometry x="405" y="838" width="200" height="22" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="20" value="UPDATE api_keys SET active = '0'&lt;br&gt;(desactivar clave expirada)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="868" width="280" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="21" value="generateRawKey() — UUID aleatorio" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="953" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="22" value="AES/GCM encrypt(rawKey, secretKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1033" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="23" value="apiKeyHash = SHA-256(rawKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1113" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="24" value="expirationAt = próximo MONDAY 00:00" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1193" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="25" value="&lt;b&gt;INSERT&lt;/b&gt; api_keys&lt;br&gt;(clientHash, encryptedKey,&lt;br&gt;apiKeyHash, expirationAt, active='1')" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="1273" width="310" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="26" value="&lt;b&gt;HTTP 200 OK&lt;/b&gt;&lt;br&gt;APIKEY_EXPIRED_RENEWED&lt;br&gt;ApiKey expirado. Nuevo ApiKey generado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1383" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- EDGES                                                      -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="70" edge="1" source="2" target="3" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="71" edge="1" source="3" target="4" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="72" value="No" edge="1" source="4" target="5" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="73" value="Sí" edge="1" source="4" target="6" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="74" value="No" edge="1" source="6" target="7" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="75" value="Sí" edge="1" source="6" target="8" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="76" edge="1" source="8" target="9" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="77" edge="1" source="9" target="10" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="78" value="No" edge="1" source="10" target="11" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="79" value="Sí" edge="1" source="10" target="17" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="80" edge="1" source="11" target="12" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="81" edge="1" source="12" target="13" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="82" edge="1" source="13" target="14" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="83" edge="1" source="14" target="15" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="84" edge="1" source="15" target="16" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="85" value="No&lt;br&gt;(vigente)" edge="1" source="17" target="18" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="86" value="Sí&lt;br&gt;(expirada)" edge="1" source="17" target="20" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="87" edge="1" source="18" target="19" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="88" edge="1" source="20" target="21" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="89" edge="1" source="21" target="22" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="90" edge="1" source="22" target="23" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="91" edge="1" source="23" target="24" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="92" edge="1" source="24" target="25" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="93" edge="1" source="25" target="26" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ================================================================ -->
+  <!-- PAGE 2: POST /api/apikeys/renew                                  -->
+  <!-- ================================================================ -->
+  <diagram id="ren" name="POST /renew">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ── START ── -->
+        <mxCell id="102" value="POST /api/apikeys/renew" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CorrelationIdFilter ── -->
+        <mxCell id="103" value="&lt;b&gt;CorrelationIdFilter&lt;/b&gt;&lt;br&gt;Leer header X-Correlation-Id (generar UUID si ausente)&lt;br&gt;Inyectar en MDC de SLF4J · Agregar al response" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="390" y="100" width="300" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: ambos headers presentes? ── -->
+        <mxCell id="104" value="¿Headers X-Client-Id y&lt;br&gt;X-Renewed-ApiKey-Id&lt;br&gt;presentes y no vacíos?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="280" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="105" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;MISSING_PARAMETERS&lt;br&gt;&lt;i&gt;Debe proporcionar los headers requeridos&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="220" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: renewedApiKeyId válido? ── -->
+        <mxCell id="106" value="¿SHA-256(renewedApiKeyId)&lt;br&gt;== validRenewedApikeyIdHash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="325" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="107" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;INVALID_RENEWED_APIKEY_ID&lt;br&gt;&lt;i&gt;Clave de renovación inválida&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="340" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: clientId válido? ── -->
+        <mxCell id="108" value="¿SHA-256(clientId)&lt;br&gt;== validClientIdHash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="435" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="109" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;INVALID_CLIENT_ID&lt;br&gt;&lt;i&gt;Cliente no autorizado&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="450" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Process: clientHash ── -->
+        <mxCell id="110" value="clientHash = SHA-256(clientId)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="545" width="260" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── DB: SELECT con PESSIMISTIC_WRITE ── -->
+        <mxCell id="111" value="&lt;b&gt;SELECT&lt;/b&gt; * FROM api_keys&lt;br&gt;WHERE client_id = clientHash AND active = '1'&lt;br&gt;[TX SERIALIZABLE · PESSIMISTIC_WRITE · timeout 5s]" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="625" width="310" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: existe clave activa? ── -->
+        <mxCell id="112" value="¿Existe clave activa&lt;br&gt;para este cliente?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="745" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: cooldown activo? ── -->
+        <mxCell id="113" value="¿renewCooldownUntil&lt;br&gt;!= null AND &gt; ahora?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="860" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Error 429: COOLDOWN ── -->
+        <mxCell id="114" value="&lt;b&gt;HTTP 429&lt;/b&gt;&lt;br&gt;RENEW_COOLDOWN_ACTIVE&lt;br&gt;&lt;i&gt;Espere a que finalice el período de cooldown&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="875" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Deactivate ── -->
+        <mxCell id="115" value="UPDATE api_keys SET active = '0'&lt;br&gt;(desactivar clave actual)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="970" width="280" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Merge annotation ── -->
+        <mxCell id="116" value="&lt;i&gt;Ambas ramas convergen aquí (sin clave activa previa, o tras deactivate)&lt;/i&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="1048" width="400" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Create steps ── -->
+        <mxCell id="117" value="generateRawKey() — UUID aleatorio" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1073" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="118" value="AES/GCM encrypt(rawKey, secretKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1153" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="119" value="apiKeyHash = SHA-256(rawKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1233" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="120" value="expirationAt = próximo MONDAY 00:00" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1313" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="121" value="&lt;b&gt;INSERT&lt;/b&gt; api_keys&lt;br&gt;(clientHash, encryptedKey,&lt;br&gt;apiKeyHash, expirationAt, active='1')" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="1393" width="310" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="122" value="&lt;b&gt;SELECT TOP 1&lt;/b&gt; ORDER BY createdAt DESC&lt;br&gt;SET renewCooldownUntil = now + 24h · SAVE&lt;br&gt;(sin lock de escritura)" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="1503" width="310" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Response OK ── -->
+        <mxCell id="123" value="&lt;b&gt;HTTP 200 OK&lt;/b&gt;&lt;br&gt;APIKEY_MANUAL_RENEWED&lt;br&gt;ApiKey renovado correctamente" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1613" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- EDGES                                                      -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="130" edge="1" source="102" target="103" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="131" edge="1" source="103" target="104" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="132" value="No" edge="1" source="104" target="105" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="133" value="Sí" edge="1" source="104" target="106" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="134" value="No" edge="1" source="106" target="107" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="135" value="Sí" edge="1" source="106" target="108" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="136" value="No" edge="1" source="108" target="109" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="137" value="Sí" edge="1" source="108" target="110" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="138" edge="1" source="110" target="111" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="139" edge="1" source="111" target="112" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <!-- "No" de existe activa → ruta por la izquierda hasta C1 -->
+        <mxCell id="140" value="No&lt;br&gt;(sin clave activa)" edge="1" source="112" target="117" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="141" value="Sí" edge="1" source="112" target="113" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="142" value="Sí&lt;br&gt;(cooldown activo)" edge="1" source="113" target="114" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="143" value="No&lt;br&gt;(puede renovar)" edge="1" source="113" target="115" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="144" edge="1" source="115" target="117" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="145" edge="1" source="117" target="118" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="146" edge="1" source="118" target="119" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="147" edge="1" source="119" target="120" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="148" edge="1" source="120" target="121" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="149" edge="1" source="121" target="122" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="150" edge="1" source="122" target="123" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ================================================================ -->
+  <!-- PAGE 3: POST /api/apikeys/validate                               -->
+  <!-- ================================================================ -->
+  <diagram id="val" name="POST /validate">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ── START ── -->
+        <mxCell id="202" value="POST /api/apikeys/validate" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CorrelationIdFilter ── -->
+        <mxCell id="203" value="&lt;b&gt;CorrelationIdFilter&lt;/b&gt;&lt;br&gt;Leer header X-Correlation-Id (generar UUID si ausente)&lt;br&gt;Inyectar en MDC de SLF4J · Agregar al response" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="390" y="100" width="300" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: ambos headers presentes? ── -->
+        <mxCell id="204" value="¿Headers X-Client-Id&lt;br&gt;y X-Api-Key&lt;br&gt;presentes y no vacíos?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="280" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="205" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;MISSING_PARAMETERS&lt;br&gt;&lt;i&gt;Debe proporcionar los headers requeridos&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="220" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: clientId válido? ── -->
+        <mxCell id="206" value="¿SHA-256(clientId)&lt;br&gt;== validClientIdHash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="325" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="207" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;INVALID_CLIENT_ID&lt;br&gt;&lt;i&gt;Cliente no autorizado&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="340" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Process: clientHash ── -->
+        <mxCell id="208" value="clientHash = SHA-256(clientId)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="435" width="260" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── DB: SELECT READ-ONLY ── -->
+        <mxCell id="209" value="&lt;b&gt;SELECT TOP 1&lt;/b&gt; FROM api_keys&lt;br&gt;WHERE client_id = clientHash&lt;br&gt;ORDER BY created_at DESC · [TX READ-ONLY]" style="shape=mxgraph.flowchart.database;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="385" y="515" width="310" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: encontrado y active='1'? ── -->
+        <mxCell id="210" value="¿Registro encontrado&lt;br&gt;con active = '1'?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="635" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="211" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;APIKEY_NOT_FOUND&lt;br&gt;&lt;i&gt;No se encontró un ApiKey activo para este cliente&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="650" width="240" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: expirado? ── -->
+        <mxCell id="212" value="¿expirationAt&lt;br&gt;&lt; ahora?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="745" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="213" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;APIKEY_EXPIRED&lt;br&gt;&lt;i&gt;El ApiKey ha expirado&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="760" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Process: SHA-256 del key provisto ── -->
+        <mxCell id="214" value="providedHash = SHA-256(providedApiKey)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="855" width="260" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Decision: hashes coinciden? ── -->
+        <mxCell id="215" value="¿providedHash ==&lt;br&gt;activeKey.apiKeyHash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="935" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="216" value="&lt;b&gt;HTTP 401&lt;/b&gt;&lt;br&gt;APIKEY_INVALID&lt;br&gt;&lt;i&gt;El ApiKey no es válido&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="950" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Response OK ── -->
+        <mxCell id="217" value="&lt;b&gt;HTTP 200 OK&lt;/b&gt;&lt;br&gt;APIKEY_VALID&lt;br&gt;El ApiKey es válido" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1045" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- EDGES                                                      -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <mxCell id="230" edge="1" source="202" target="203" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="231" edge="1" source="203" target="204" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="232" value="No" edge="1" source="204" target="205" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="233" value="Sí" edge="1" source="204" target="206" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="234" value="No" edge="1" source="206" target="207" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="235" value="Sí" edge="1" source="206" target="208" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="236" edge="1" source="208" target="209" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="237" edge="1" source="209" target="210" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="238" value="No" edge="1" source="210" target="211" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="239" value="Sí" edge="1" source="210" target="212" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="240" value="Sí&lt;br&gt;(expirado)" edge="1" source="212" target="213" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="241" value="No&lt;br&gt;(vigente)" edge="1" source="212" target="214" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="242" edge="1" source="214" target="215" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="243" value="No&lt;br&gt;(no coincide)" edge="1" source="215" target="216" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="244" value="Sí&lt;br&gt;(válido)" edge="1" source="215" target="217" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+</mxfile>
